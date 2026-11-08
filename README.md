@@ -1,8 +1,26 @@
-﻿# ClipLite
+# ClipLite
 
 Windows PowerShell 5.1とWindows標準.NET Frameworkで動作する、テキスト専用のクリップボード履歴・定型文ツールです。
 
 Ctrlキー2回で表示し、数字・英字キーで項目を選択できます。履歴はメモリ内のみ、定型文はローカルJSONに保存します。
+
+## 画面紹介
+
+ClipLite v0.7.2の実画面です。履歴・定型文は撮影用のサンプルで、個人のクリップボード履歴ではありません。
+
+### クリップボード履歴
+
+コピーしたテキストを一覧から選択できます。`Ctrl+F`で検索し、先頭の数字・英字キーやEnterで選択した項目を貼り付けます。
+
+![ClipLiteのクリップボード履歴。サンプル文章5件を一覧表示](docs/images/cliplite-history.png)
+
+### 定型文
+
+よく使う文章を登録し、追加・編集・削除できます。本文に `{{DATE}}` を入れると、使用時に今日の日付へ置き換わります。
+
+![ClipLiteの定型文。今日の日付やメールのあいさつなど5件を表示](docs/images/cliplite-templates.png)
+
+画像の原本とブログ向けの説明文は [掲載用画像ガイド](docs/SCREENSHOTS.md) にまとめています。
 
 ## 起動
 
@@ -16,6 +34,8 @@ ClipLiteはWindows PowerShell上で動作します。起動方法やWindowsの�
 
 通常起動の `Start-ClipLite.cmd` には非表示指定がありますが、起動時に一瞬表示されたり、環境によってウィンドウが残ったりする場合があります。`Start-ClipLite-Diagnostic.cmd` やPowerShellから直接起動した場合は、診断情報や実行中の案内が表示されます。終了するときはタスクトレイのメニューから「終了」を選びます。
 
+![ClipLite実行中のPowerShellターミナル。閉じずに最小化する案内](docs/images/cliplite-terminal.png)
+
 ## フォルダー構成
 
 ```text
@@ -26,7 +46,7 @@ ClipLiteはWindows PowerShell上で動作します。起動方法やWindowsの�
 ├── execute.bat                   起動用の互換入口
 ├── config.example.json          共有する標準設定
 ├── templates.example.json       公開可能な定型文サンプル
-├── docs/                        操作説明・公開評価
+├── docs/                        操作説明・公開評価・掲載用画像
 ├── scripts/                     配布ZIPの作成
 ├── tests/                       検証コード
 └── dist/                        生成した配布物（Git対象外）
