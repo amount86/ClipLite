@@ -1,4 +1,4 @@
-# ClipLite
+﻿# ClipLite
 
 Windows PowerShell 5.1とWindows標準.NET Frameworkで動作する、テキスト専用のクリップボード履歴・定型文ツールです。
 
@@ -9,6 +9,12 @@ Ctrlキー2回で表示し、数字・英字キーで項目を選択できます
 リポジトリ直下の `Start-ClipLite.cmd` を実行します。初回起動時は `*.example.json` から個人用の `config.json` と `templates.json` を作成します。既存ファイルは上書きしません。
 
 PowerShellとAdd-Typeの使用が許可された環境が必要です。実行ポリシーを自動変更しません。職場では組織の利用規程に従ってください。起動できない場合は `Start-ClipLite-Diagnostic.cmd` で確認します。
+
+### ターミナルが表示された場合
+
+ClipLiteはWindows PowerShell上で動作します。起動方法やWindowsの環境によって、PowerShellのターミナル（コンソール）が表示されることがあります。表示された場合は、**閉じずに最小化して使用してください。ウィンドウを閉じるとClipLiteも終了します。**
+
+通常起動の `Start-ClipLite.cmd` には非表示指定がありますが、起動時に一瞬表示されたり、環境によってウィンドウが残ったりする場合があります。`Start-ClipLite-Diagnostic.cmd` やPowerShellから直接起動した場合は、診断情報や実行中の案内が表示されます。終了するときはタスクトレイのメニューから「終了」を選びます。
 
 ## フォルダー構成
 
