@@ -1,0 +1,14 @@
+﻿{
+  "MaxHistory": 100,
+  "MaxTextLength": 20000,
+  "IgnoreDuplicate": true,
+  "IgnoreWhitespaceOnly": true,
+  "PreviewLength": 120,
+  "Window": {
+    "Width": 520,
+    "Height": 340,
+    "TopMost": true
+  },
+  "AutoPaste": true,
+  "DoubleCtrlThresholdMs": 400
+}

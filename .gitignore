@@ -1,0 +1,11 @@
+# Local settings and potentially sensitive content
+/config.json
+/templates.json
+/ui-state.json
+/history.json
+*.log
+*.lnk
+*.tmp
+# Generated distribution packages
+/dist/
+/tests/atomic-test.json
