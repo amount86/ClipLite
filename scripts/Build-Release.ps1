@@ -1,13 +1,13 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $dist = Join-Path $root 'dist'
-$version = 'v0.7.2'
+$version = 'v0.7.3'
 $stage = Join-Path $dist ('build-' + [Guid]::NewGuid().ToString('N'))
 $package = Join-Path $stage ('ClipLite-' + $version)
 New-Item -ItemType Directory -Path $package -Force | Out-Null
 try {
-    foreach ($name in @('ClipLite.ps1', 'Start-ClipLite.cmd', 'Start-ClipLite-Diagnostic.cmd', 'execute.bat', 'config.example.json', 'templates.example.json')) {
+    foreach ($name in @('ClipLite.ps1', 'Start-ClipLite.cmd', 'Start-ClipLite-Diagnostic.cmd', 'execute.bat', 'config.example.json', 'templates.example.json', 'LICENSE')) {
         Copy-Item -LiteralPath (Join-Path $root $name) -Destination $package
     }
     Copy-Item -LiteralPath (Join-Path $root 'docs\USAGE.txt') -Destination (Join-Path $package 'README.txt')

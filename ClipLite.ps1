@@ -1,6 +1,6 @@
 ﻿#requires -Version 5.1
 <#
-ClipLite v0.7.2 - text clipboard history for Windows PowerShell 5.1
+ClipLite v0.7.3 - text clipboard history for Windows PowerShell 5.1
 No external modules, packages, EXE compilation, or persistent clipboard history.
 #>
 
@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$script:AppVersion = 'v0.7.2'
+$script:AppVersion = 'v0.7.3'
 $script:BaseDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $script:ConfigPath = Join-Path $script:BaseDirectory 'config.json'
 $script:TemplatesPath = Join-Path $script:BaseDirectory 'templates.json'

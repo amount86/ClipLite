@@ -63,6 +63,14 @@ ClipLiteはWindows PowerShell上で動作します。起動方法やWindowsの�
 .\scripts\Build-Release.ps1
 ```
 
-配布スクリプトは指定したソースとサンプルのみを使い、`dist/ClipLite-v0.7.2.zip` とSHA256チェックサムを生成します。個人用JSON・ログは取り込みません。ZIPは展開先で直接起動できる構成です。
+配布スクリプトは指定したソースとサンプルのみを使い、`dist/ClipLite-v0.7.3.zip` とSHA256チェックサムを生成します。個人用JSON・ログは取り込みません。ZIPは展開先で直接起動できる構成です。
 
-詳細は [操作説明](docs/USAGE.txt) と [公開評価](docs/PUBLICATION-REVIEW.md) を参照してください。GUIと実アプリへの貼り付け検証、公開時のライセンス決定は別途必要です。
+詳細は [操作説明](docs/USAGE.txt) と [公開評価](docs/PUBLICATION-REVIEW.md) を参照してください。GUIと実アプリへの貼り付け検証、各利用環境での動作確認は別途必要です。
+
+## ライセンス
+
+[MIT License](LICENSE)で配布します。
+
+## 更新履歴
+
+v0.7.3（2026-11-10）：定型文の追加・編集画面をダーク配色・フラットなボタンに統一。入力エラーを画面内に表示し、MITライセンスを配布ZIPへ同梱しました。掲載画像はv0.7.2のものです。

@@ -1,4 +1,9 @@
-﻿リポジトリではアプリを直下に配置し、操作説明をdocs/USAGE.txtに置いています。
+﻿ClipLite v0.7.3（2026-11-10）
+定型文の追加・編集画面をダーク配色・枠なしヘッダーに変更。
+保存・キャンセル・閉じるボタン、ヘッダーのドラッグ移動に対応。
+未入力エラーを画面内に表示します。MITライセンス全文はLICENSEを参照してください。
+
+リポジトリではアプリを直下に配置し、操作説明をdocs/USAGE.txtに置いています。
 初回起動時にconfig.example.jsonとtemplates.example.jsonから個人用JSONを作成します。
 個人用JSONとログはGit対象外です。配布にはscripts/Build-Release.ps1で生成したZIPを使用してください。
 
