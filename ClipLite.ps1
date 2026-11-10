@@ -478,30 +478,60 @@ namespace ClipLite.Native
     function Show-TemplateEditor($ExistingItem) {
         $dialog = New-Object System.Windows.Forms.Form
         $dialog.Text = if ($null -eq $ExistingItem) { '定型文を追加' } else { '定型文を編集' }
-        $dialog.Width = 560
-        $dialog.Height = 390
+        $dialog.Width = 600
+        $dialog.Height = 470
         $dialog.MinimumSize = New-Object System.Drawing.Size(440, 300)
         $dialog.StartPosition = 'CenterParent'
         $dialog.Font = $script:Form.Font
         $dialog.TopMost = $script:Form.TopMost
         $dialog.ShowInTaskbar = $false
+        $dialog.FormBorderStyle = 'None'
+        $dialog.ClientSize = New-Object System.Drawing.Size(600, 470)
+        $dialog.BackColor = $script:Theme.Back
+        $dialog.ForeColor = $script:Theme.Text
+        $dialog.Padding = New-Object System.Windows.Forms.Padding(1)
+        $dialog.AutoScaleMode = 'Font'
+        $dialog.Add_Paint({ param($sender, $e)
+            $pen = New-Object System.Drawing.Pen($script:Theme.Border)
+            try { $e.Graphics.DrawRectangle($pen, 0, 0, $sender.ClientSize.Width - 1, $sender.ClientSize.Height - 1) }
+            finally { $pen.Dispose() }
+        })
+        $header = New-Object System.Windows.Forms.Label
+        $header.Text = $dialog.Text
+        $header.BackColor = $script:Theme.Panel
+        $header.Location = New-Object System.Drawing.Point(1, 1)
+        $header.Size = New-Object System.Drawing.Size(598, 44)
+        $header.Anchor = 'Top,Left,Right'
+        $header.Padding = New-Object System.Windows.Forms.Padding(18, 0, 0, 0)
+        $header.TextAlign = 'MiddleLeft'
+        $header.Add_MouseDown({ param($sender, $e)
+            if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) {
+                [ClipLite.Native.FocusHelper]::BeginDrag($dialog.Handle)
+            }
+        })
+        $close = New-FlatButton '×' 32 30
+        $close.Location = New-Object System.Drawing.Point(556, 8)
+        $close.Anchor = 'Top,Right'
+        $close.FlatAppearance.BorderSize = 0
+        $close.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+        $close.AccessibleName = '閉じる'
 
         $nameLabel = New-Object System.Windows.Forms.Label
-        $nameLabel.Text = '名前:'
-        $nameLabel.Location = New-Object System.Drawing.Point(12, 15)
+        $nameLabel.Text = '名前'
+        $nameLabel.Location = New-Object System.Drawing.Point(20, 62)
         $nameLabel.AutoSize = $true
         $nameBox = New-Object System.Windows.Forms.TextBox
-        $nameBox.Location = New-Object System.Drawing.Point(65, 12)
-        $nameBox.Width = 465
+        $nameBox.Location = New-Object System.Drawing.Point(20, 88)
+        $nameBox.Width = 560
         $nameBox.Anchor = 'Top,Left,Right'
 
         $textLabel = New-Object System.Windows.Forms.Label
-        $textLabel.Text = '本文:  {{DATE}} は使用時に今日の日付（YYYY/MM/DD）へ変換されます'
-        $textLabel.Location = New-Object System.Drawing.Point(12, 49)
+        $textLabel.Text = '本文'
+        $textLabel.Location = New-Object System.Drawing.Point(20, 128)
         $textLabel.AutoSize = $true
         $textBox = New-Object System.Windows.Forms.TextBox
-        $textBox.Location = New-Object System.Drawing.Point(12, 70)
-        $textBox.Size = New-Object System.Drawing.Size(518, 225)
+        $textBox.Location = New-Object System.Drawing.Point(20, 154)
+        $textBox.Size = New-Object System.Drawing.Size(560, 196)
         $textBox.Anchor = 'Top,Bottom,Left,Right'
         $textBox.Multiline = $true
         $textBox.AcceptsReturn = $true
@@ -509,14 +539,40 @@ namespace ClipLite.Native
         $textBox.ScrollBars = 'Both'
         $textBox.WordWrap = $false
 
-        $ok = New-Object System.Windows.Forms.Button
+        foreach ($box in @($nameBox, $textBox)) {
+            $box.BackColor = $script:Theme.Input
+            $box.ForeColor = $script:Theme.Text
+            $box.BorderStyle = 'FixedSingle'
+        }
+        $nameBox.AccessibleName = '定型文の名前'
+        $textBox.AccessibleName = '定型文の本文'
+        $nameBox.TabIndex = 0
+        $textBox.TabIndex = 1
+        $hint = New-Object System.Windows.Forms.Label
+        $hint.Text = '{{DATE}} → 今日の日付（YYYY/MM/DD）'
+        $hint.ForeColor = $script:Theme.SubText
+        $hint.Location = New-Object System.Drawing.Point(20, 360)
+        $hint.Size = New-Object System.Drawing.Size(560, 24)
+        $hint.Anchor = 'Bottom,Left,Right'
+        $validation = New-Object System.Windows.Forms.Label
+        $validation.ForeColor = [System.Drawing.Color]::FromArgb(255, 170, 150)
+        $validation.Location = New-Object System.Drawing.Point(20, 387)
+        $validation.Size = New-Object System.Drawing.Size(560, 24)
+        $validation.Anchor = 'Bottom,Left,Right'
+        $ok = New-FlatButton '保存' 100 34
+        $ok.BackColor = $script:Theme.TabActive
+        $ok.FlatAppearance.MouseOverBackColor = $script:Theme.SelBack
+        $ok.TabStop = $true
+        $ok.TabIndex = 2
         $ok.Text = '保存'
-        $ok.Location = New-Object System.Drawing.Point(365, 310)
+        $ok.Location = New-Object System.Drawing.Point(480, 416)
         $ok.Anchor = 'Bottom,Right'
         $ok.DialogResult = [System.Windows.Forms.DialogResult]::None
-        $cancel = New-Object System.Windows.Forms.Button
+        $cancel = New-FlatButton 'キャンセル' 110 34
+        $cancel.TabStop = $true
+        $cancel.TabIndex = 3
         $cancel.Text = 'キャンセル'
-        $cancel.Location = New-Object System.Drawing.Point(455, 310)
+        $cancel.Location = New-Object System.Drawing.Point(358, 416)
         $cancel.Anchor = 'Bottom,Right'
         $cancel.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
 
@@ -526,11 +582,11 @@ namespace ClipLite.Native
         }
         $ok.Add_Click({
             if ([string]::IsNullOrWhiteSpace($nameBox.Text)) {
-                [System.Windows.Forms.MessageBox]::Show('名前を入力してください。', 'ClipLite') | Out-Null
+                $validation.Text = '名前を入力してください。'
                 [void]$nameBox.Focus(); return
             }
             if ([string]::IsNullOrWhiteSpace($textBox.Text)) {
-                [System.Windows.Forms.MessageBox]::Show('本文を入力してください。', 'ClipLite') | Out-Null
+                $validation.Text = '本文を入力してください。'
                 [void]$textBox.Focus(); return
             }
             $dialog.Tag = [pscustomobject]@{ Name = $nameBox.Text.Trim(); Text = $textBox.Text }
@@ -539,15 +595,19 @@ namespace ClipLite.Native
         })
         $dialog.AcceptButton = $ok
         $dialog.CancelButton = $cancel
-        $dialog.Controls.AddRange(@($nameLabel, $nameBox, $textLabel, $textBox, $ok, $cancel))
-        [void]$nameBox.Focus()
+        $dialog.Controls.AddRange(@($header, $close, $nameLabel, $nameBox, $textLabel, $textBox, $hint, $validation, $ok, $cancel))
+        $close.BringToFront()
+        $dialog.Add_Shown({ [void]$nameBox.Focus() })
 
         $script:IsModalOpen = $true
-        try { $dialogResult = $dialog.ShowDialog($script:Form) }
-        finally { $script:IsModalOpen = $false }
-
-        if ($dialogResult -eq [System.Windows.Forms.DialogResult]::OK -and $null -ne $dialog.Tag) {
-            Write-Output -NoEnumerate $dialog.Tag
+        try {
+            $dialogResult = $dialog.ShowDialog($script:Form)
+            if ($dialogResult -eq [System.Windows.Forms.DialogResult]::OK -and $null -ne $dialog.Tag) {
+                Write-Output -NoEnumerate $dialog.Tag
+            }
+        } finally {
+            $script:IsModalOpen = $false
+            $dialog.Dispose()
         }
     }
 
