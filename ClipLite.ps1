@@ -1,6 +1,6 @@
 ﻿#requires -Version 5.1
 <#
-ClipLite v0.7.3 - text clipboard history for Windows PowerShell 5.1
+ClipLite v0.7.4 - text clipboard history for Windows PowerShell 5.1
 No external modules, packages, EXE compilation, or persistent clipboard history.
 #>
 
@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$script:AppVersion = 'v0.7.3'
+$script:AppVersion = 'v0.7.4'
 $script:BaseDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $script:ConfigPath = Join-Path $script:BaseDirectory 'config.json'
 $script:TemplatesPath = Join-Path $script:BaseDirectory 'templates.json'
@@ -47,6 +47,36 @@ $script:Theme = @{
     TabActive   = [System.Drawing.Color]::FromArgb(0, 110, 200)
     TabInactive = [System.Drawing.Color]::FromArgb(55, 55, 62)
     Input       = [System.Drawing.Color]::FromArgb(24, 24, 28)
+    Hover       = [System.Drawing.Color]::FromArgb(70, 70, 80)
+    ErrorText   = [System.Drawing.Color]::FromArgb(255, 170, 150)
+}
+
+$script:DarkTheme = $script:Theme
+$script:LightTheme = @{
+    Back = [Drawing.Color]::White
+    Panel = [Drawing.Color]::FromArgb(243,245,248)
+    Border = [Drawing.Color]::FromArgb(160,168,180)
+    Text = [Drawing.Color]::FromArgb(32,36,42)
+    SubText = [Drawing.Color]::FromArgb(72,82,96)
+    Key = [Drawing.Color]::FromArgb(12,83,150)
+    SelBack = $script:DarkTheme.SelBack
+    SelText = [Drawing.Color]::White
+    TabActive = $script:DarkTheme.TabActive
+    TabInactive = [Drawing.Color]::FromArgb(232,236,241)
+    Input = [Drawing.Color]::White
+    Hover = [Drawing.Color]::FromArgb(212,224,238)
+    ErrorText = [Drawing.Color]::FromArgb(163,37,35)
+}
+$script:ThemeMode = 'System'
+$script:FocusTimer = $null
+
+function Get-PreferredPalette {
+    if ($script:ThemeMode -eq 'Dark') { return $script:DarkTheme }
+    if ($script:ThemeMode -eq 'System') {
+        $light = Get-ItemPropertyValue -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name AppsUseLightTheme -ErrorAction SilentlyContinue
+        if ($null -ne $light -and $light -eq 0) { return $script:DarkTheme }
+    }
+    return $script:LightTheme
 }
 
 function Write-StartupLog([string]$Message) {
@@ -213,6 +243,8 @@ namespace ClipLite.Native
 
         private const uint KEYEVENTF_KEYUP = 0x0002;
         private const byte VK_CONTROL = 0x11, VK_V = 0x56, VK_SHIFT = 0x10, VK_MENU = 0x12;
+
+        public static IntPtr ForegroundWindow { get { return GetForegroundWindow(); } }
 
         public static void Capture(out IntPtr topWindow, out IntPtr focusWindow)
         {
@@ -555,12 +587,13 @@ namespace ClipLite.Native
         $hint.Size = New-Object System.Drawing.Size(560, 24)
         $hint.Anchor = 'Bottom,Left,Right'
         $validation = New-Object System.Windows.Forms.Label
-        $validation.ForeColor = [System.Drawing.Color]::FromArgb(255, 170, 150)
+        $validation.ForeColor = $script:Theme.ErrorText
         $validation.Location = New-Object System.Drawing.Point(20, 387)
         $validation.Size = New-Object System.Drawing.Size(560, 24)
         $validation.Anchor = 'Bottom,Left,Right'
         $ok = New-FlatButton '保存' 100 34
         $ok.BackColor = $script:Theme.TabActive
+        $ok.ForeColor = $script:Theme.SelText
         $ok.FlatAppearance.MouseOverBackColor = $script:Theme.SelBack
         $ok.TabStop = $true
         $ok.TabIndex = 2
@@ -693,6 +726,8 @@ namespace ClipLite.Native
             if ([string]::IsNullOrWhiteSpace($raw)) { return }
             $state = ConvertFrom-Json -InputObject $raw
             if ($null -eq $state) { return }
+            $mode = $state.PSObject.Properties['ThemeMode']
+            if ($null -ne $mode -and $mode.Value -in @('System','Light','Dark')) { $script:ThemeMode = $mode.Value }
             $tabProperty = $state.PSObject.Properties['SelectedTab']
             if ($null -ne $tabProperty) {
                 $value = [int]$tabProperty.Value
@@ -705,7 +740,7 @@ namespace ClipLite.Native
 
     function Save-UiState {
         try {
-            $json = [pscustomobject]@{ SelectedTab = [int]$script:LastSelectedTab } | ConvertTo-Json
+            $json = [pscustomobject]@{ SelectedTab = [int]$script:LastSelectedTab; ThemeMode = $script:ThemeMode } | ConvertTo-Json
             Write-AtomicUtf8 $script:UiStatePath $json
         } catch { }
     }
@@ -719,6 +754,8 @@ namespace ClipLite.Native
         $script:SearchPanel.Visible = $isHistory
         $script:HistoryTabButton.BackColor = if ($isHistory) { $script:Theme.TabActive } else { $script:Theme.TabInactive }
         $script:TemplateTabButton.BackColor = if ($isHistory) { $script:Theme.TabInactive } else { $script:Theme.TabActive }
+        $script:HistoryTabButton.ForeColor = if ($isHistory) { $script:Theme.SelText } else { $script:Theme.Text }
+        $script:TemplateTabButton.ForeColor = if ($isHistory) { $script:Theme.Text } else { $script:Theme.SelText }
         Update-CountLabel
         if (-not $NoSave) { Save-UiState }
         if ($script:Form.Visible) { Focus-CurrentTabTopItem }
@@ -883,6 +920,7 @@ namespace ClipLite.Native
     }
 
     function Show-HistoryWindow([switch]$FromHotkey) {
+        if ($script:ThemeMode -eq 'System') { Update-WindowTheme }
         if ($FromHotkey -and $null -ne $script:CtrlHook) {
             $top = $script:CtrlHook.CapturedTopWindow
             $focus = $script:CtrlHook.CapturedFocusWindow
@@ -984,7 +1022,7 @@ namespace ClipLite.Native
         $b.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
         $b.FlatAppearance.BorderSize = 1
         $b.FlatAppearance.BorderColor = $script:Theme.Border
-        $b.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(70, 70, 80)
+        $b.FlatAppearance.MouseOverBackColor = $script:Theme.Hover
         $b.BackColor = $script:Theme.TabInactive
         $b.ForeColor = $script:Theme.Text
         $b.TabStop = $false
@@ -1027,6 +1065,7 @@ namespace ClipLite.Native
 
     Load-Templates
     Load-UiState
+    $script:Theme = Get-PreferredPalette
 
     # ================= メインフォーム =================
     $script:Form = New-Object System.Windows.Forms.Form
@@ -1083,6 +1122,12 @@ namespace ClipLite.Native
     $script:CountLabel.TextAlign = 'MiddleRight'
     $script:CountLabel.Padding = New-Object System.Windows.Forms.Padding(0, 0, 8, 0)
     $infoBar.Controls.Add($script:CountLabel)
+    $themeButton = New-FlatButton '' 112 22
+    $themeButton.Dock = 'Left'
+    $themeButton.TabStop = $true
+    $themeButton.AccessibleName = '配色の切り替え'
+    $titleLabel.Width = 94
+    $infoBar.Controls.Add($themeButton)
     $infoBar.Controls.Add($titleLabel)
 
     $dragHandler = {
@@ -1172,6 +1217,41 @@ namespace ClipLite.Native
     $script:Form.Controls.Add($script:SearchPanel)
     $script:Form.Controls.Add($infoBar)
     $script:Form.Controls.Add($tabBar)
+
+    function Update-WindowTheme {
+        $script:Theme = Get-PreferredPalette
+        $palette = $script:Theme
+        $script:Form.BackColor = $palette.Border
+        foreach ($control in @($tabBar,$infoBar,$script:SearchPanel,$templateButtons,$bottomLabel,$closeButton)) {
+            $control.BackColor = $palette.Panel
+        }
+        foreach ($control in @($script:HistoryPanel,$script:TemplatePanel,$script:ListBox,$script:TemplateList)) {
+            $control.BackColor = $palette.Back
+            $control.ForeColor = $palette.Text
+        }
+        $titleLabel.ForeColor = $bottomLabel.ForeColor = $palette.SubText
+        $script:CountLabel.ForeColor = $palette.Text
+        $script:SearchBox.BackColor = $palette.Input
+        $script:SearchBox.ForeColor = $palette.Text
+        foreach ($button in @($themeButton,$closeButton,$script:HistoryTabButton,$script:TemplateTabButton,$addTemplateButton,$editTemplateButton,$deleteTemplateButton)) {
+            $button.ForeColor = $palette.Text
+            $button.FlatAppearance.BorderColor = $palette.Border
+            $button.FlatAppearance.MouseOverBackColor = $palette.Hover
+        }
+        foreach ($button in @($themeButton,$addTemplateButton,$editTemplateButton,$deleteTemplateButton)) {
+            $button.BackColor = $palette.TabInactive
+        }
+        $label = switch ($script:ThemeMode) { 'Light' { 'ライト' } 'Dark' { 'ダーク' } default { 'システム' } }
+        $themeButton.Text = '配色：' + $label
+        Set-ActiveTab $script:LastSelectedTab -NoSave
+        $script:Form.Invalidate($true)
+    }
+    $themeButton.Add_Click({
+        $script:ThemeMode = switch ($script:ThemeMode) { 'System' { 'Light' } 'Light' { 'Dark' } default { 'System' } }
+        Update-WindowTheme
+        Save-UiState
+    })
+    Update-WindowTheme
 
     # ================= イベント =================
     $script:HistoryTabButton.Add_Click({ Set-ActiveTab 0 })
@@ -1272,14 +1352,26 @@ namespace ClipLite.Native
     })
 
     # 別のウィンドウにフォーカスが移ったら隠す(元のウィンドウへは戻さない)
+    function Hide-IfForegroundChanged {
+        if (-not $script:Form.Visible -or $script:IsExiting -or $script:IsModalOpen -or $script:IsHidingInternally) { return }
+        $foreground = [ClipLite.Native.FocusHelper]::ForegroundWindow
+        if ($foreground -ne [IntPtr]::Zero -and $foreground -ne $script:Form.Handle) {
+            $script:Form.Hide()
+        }
+    }
+    # Windows may decline activation when opening from a global hotkey. In that
+    # case no Deactivate event follows the first outside click.
+    $script:FocusTimer = New-Object System.Windows.Forms.Timer
+    $script:FocusTimer.Interval = 250
+    $script:FocusTimer.Add_Tick({ Hide-IfForegroundChanged })
+    $script:Form.Add_VisibleChanged({
+        $script:FocusTimer.Enabled = $script:Form.Visible
+    })
     $script:Form.Add_Deactivate({
         if ($script:IsExiting -or $script:IsModalOpen -or $script:IsHidingInternally) { return }
         if (-not $script:Form.Visible) { return }
         [void]$script:Form.BeginInvoke([System.Windows.Forms.MethodInvoker]{
-            if ($script:IsExiting -or $script:IsModalOpen) { return }
-            if (-not $script:Form.Visible) { return }
-            if ([System.Windows.Forms.Form]::ActiveForm -eq $script:Form) { return }
-            $script:Form.Hide()
+            Hide-IfForegroundChanged
         })
     })
 
@@ -1357,6 +1449,7 @@ finally {
             $script:NotifyIcon.Dispose()
         }
     } catch { }
+    try { if ($null -ne $script:FocusTimer) { $script:FocusTimer.Dispose() } } catch { }
     try { if ($null -ne $script:CtrlHook) { $script:CtrlHook.Dispose() } } catch { }
     try { if ($null -ne $script:MessageWindow) { $script:MessageWindow.Dispose() } } catch { }
     try {

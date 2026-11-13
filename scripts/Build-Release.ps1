@@ -2,7 +2,7 @@
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $dist = Join-Path $root 'dist'
-$version = 'v0.7.3'
+$version = 'v0.7.4'
 $stage = Join-Path $dist ('build-' + [Guid]::NewGuid().ToString('N'))
 $package = Join-Path $stage ('ClipLite-' + $version)
 New-Item -ItemType Directory -Path $package -Force | Out-Null
